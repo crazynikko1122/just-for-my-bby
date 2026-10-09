@@ -215,7 +215,9 @@ export default function App() {
     buzz(12)
     burst(14 + step * 5)
     if (step < STEPS.length - 1) {
-      setStep((s) => s + 1)
+      // not `s => s + 1`: the outgoing card stays tappable while it animates
+      // out, and a second tap on it would skip a question (or run past the end)
+      setStep(step + 1)
     } else {
       setFlash((f) => f + 1)
       buzz([18, 40, 26])
