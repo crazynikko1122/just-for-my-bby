@@ -1,0 +1,576 @@
+:root {
+  --ink: #f6f2ff;
+  --muted: rgba(246, 242, 255, 0.62);
+  --pink: #ff8fd0;
+  --violet: #a97bff;
+  --deep: #0b0713;
+  --glass: rgba(255, 255, 255, 0.07);
+  --stroke: rgba(255, 255, 255, 0.16);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--deep);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Inter,
+    system-ui, sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- stage ---------- */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  isolation: isolate;
+}
+
+/* ---------- background ---------- */
+
+.bg {
+  position: absolute;
+  inset: -12%;
+  z-index: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.75;
+  will-change: transform, opacity;
+}
+
+.orb.a {
+  width: 68vmin;
+  height: 68vmin;
+  left: -14vmin;
+  top: -8vmin;
+  background: radial-gradient(circle at 30% 30%, #b06bff, rgba(120, 60, 255, 0));
+}
+.orb.b {
+  width: 74vmin;
+  height: 74vmin;
+  right: -20vmin;
+  top: 18vmin;
+  background: radial-gradient(circle at 60% 40%, #ff5fae, rgba(255, 60, 160, 0));
+}
+.orb.c {
+  width: 62vmin;
+  height: 62vmin;
+  left: 8vmin;
+  bottom: -18vmin;
+  background: radial-gradient(circle at 50% 50%, #5f7bff, rgba(80, 100, 255, 0));
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(120% 80% at 50% 30%, transparent 40%, rgba(4, 2, 10, 0.72) 100%);
+}
+
+/* ---------- layout ---------- */
+
+.content {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: 460px;
+  height: 100%;
+  padding: calc(18px + var(--safe-t)) 20px calc(22px + var(--safe-b));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.progress {
+  display: flex;
+  gap: 8px;
+  height: 6px;
+  margin-bottom: 6px;
+}
+
+.pip {
+  width: 26px;
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+  position: relative;
+}
+
+.pip span {
+  position: absolute;
+  inset: 0;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--violet), var(--pink));
+  transform-origin: left;
+}
+
+.center {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.nikko-wrap {
+  position: relative;
+  z-index: 1;
+  width: min(58vw, 232px);
+  display: grid;
+  place-items: center;
+  will-change: transform;
+}
+
+.nikko-wrap svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 26px 40px rgba(120, 30, 200, 0.45));
+}
+
+.halo {
+  position: absolute;
+  width: 118%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 130, 210, 0.36), rgba(255, 130, 210, 0) 68%);
+  filter: blur(14px);
+  z-index: -1;
+}
+
+/* ---------- per-step motion graphics ---------- */
+
+.stepfx {
+  position: absolute;
+  inset: -6% -4% 12%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 40px;
+}
+
+.stepfx > * {
+  position: absolute;
+  will-change: transform, opacity;
+}
+
+.bokeh {
+  border-radius: 50%;
+  filter: blur(9px);
+  top: 0;
+}
+
+.radar,
+.pulsering {
+  left: 50%;
+  top: 34%;
+  width: min(64vw, 260px);
+  height: min(64vw, 260px);
+  margin: calc(min(64vw, 260px) / -2);
+  border-radius: 50%;
+  border: 1.5px solid rgba(214, 160, 255, 0.55);
+  box-shadow: 0 0 40px rgba(190, 110, 255, 0.28) inset;
+}
+
+.dashring {
+  left: 50%;
+  top: 34%;
+  width: min(78vw, 320px);
+  height: min(78vw, 320px);
+  margin: calc(min(78vw, 320px) / -2);
+}
+
+.scanline {
+  left: 8%;
+  right: 8%;
+  top: 34%;
+  width: 84%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 150, 220, 0.95), transparent);
+  box-shadow: 0 0 18px rgba(255, 140, 215, 0.8);
+}
+
+.spark {
+  top: 0;
+  background: radial-gradient(circle, #fff 0 18%, rgba(255, 190, 240, 0.9) 30%, transparent 70%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+}
+
+.orbit {
+  left: 50%;
+  top: 34%;
+  width: min(74vw, 300px);
+  height: min(74vw, 300px);
+  margin: calc(min(74vw, 300px) / -2);
+}
+
+.orbit-slot {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transform-origin: 50% 50%;
+}
+
+.orbit-heart {
+  display: inline-block;
+  font-size: 19px;
+  filter: drop-shadow(0 0 10px rgba(255, 110, 190, 0.85));
+}
+
+.rays {
+  left: 50%;
+  top: 34%;
+  width: min(120vw, 520px);
+  height: min(120vw, 520px);
+  margin: calc(min(120vw, 520px) / -2);
+  border-radius: 50%;
+  opacity: 0.4;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 150, 220, 0.42) 0 6deg,
+    transparent 6deg 30deg,
+    rgba(170, 130, 255, 0.4) 30deg 36deg,
+    transparent 36deg 60deg
+  );
+  mask-image: radial-gradient(circle, transparent 26%, #000 46%, transparent 76%);
+  -webkit-mask-image: radial-gradient(circle, transparent 26%, #000 46%, transparent 76%);
+}
+
+.confetti {
+  top: 0;
+  border-radius: 2px;
+  opacity: 0.9;
+}
+
+/* ---------- glass card ---------- */
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 22px 20px 20px;
+  border-radius: 30px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.11),
+    rgba(255, 255, 255, 0.045)
+  );
+  border: 1px solid var(--stroke);
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+  box-shadow: 0 30px 70px rgba(10, 0, 30, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  text-align: center;
+  will-change: transform, opacity;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.question {
+  font-size: clamp(24px, 7.4vw, 34px);
+  line-height: 1.14;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #ffffff, #e6d5ff 70%, #ffb9e4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-wrap: balance;
+}
+
+.sub {
+  margin-top: 8px;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.answers {
+  margin-top: 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+}
+
+.btn {
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: clamp(15px, 4.2vw, 17px);
+  letter-spacing: -0.01em;
+  color: white;
+  padding: 16px clamp(18px, 6vw, 30px);
+  white-space: nowrap;
+  border-radius: 999px;
+  position: relative;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.btn.yes {
+  background: linear-gradient(135deg, #ff77c6, #a35bff 55%, #6f5bff);
+  flex: 1;
+  animation: glow 2.8s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: 0 10px 28px rgba(170, 60, 220, 0.42), 0 0 16px rgba(255, 125, 215, 0.4);
+  }
+  50% {
+    box-shadow: 0 16px 42px rgba(196, 74, 232, 0.6), 0 0 46px rgba(255, 145, 230, 0.8);
+  }
+}
+
+.btn.no {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--stroke);
+  color: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  will-change: transform;
+}
+
+.hint {
+  margin-top: 12px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.38);
+  letter-spacing: 0.02em;
+}
+
+/* ---------- intro ---------- */
+
+.intro-title {
+  font-size: clamp(34px, 11vw, 54px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  background: linear-gradient(180deg, #fff, #ffc7ec 60%, #b98cff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* emoji opt out of gradient text clipping so they keep their own colors */
+.emoji,
+.big span.emoji {
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: #fff;
+  -webkit-text-fill-color: initial;
+}
+
+/* ---------- final ---------- */
+
+.final {
+  position: relative;
+  z-index: 3;
+  height: 100%;
+  width: 100%;
+  max-width: 520px;
+  padding: calc(20px + var(--safe-t)) 22px calc(26px + var(--safe-b));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.final .nikko-wrap {
+  width: min(56vw, 250px);
+}
+
+.big {
+  font-size: clamp(30px, 9.4vw, 46px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  color: #fff;
+  filter: drop-shadow(0 0 26px rgba(255, 120, 200, 0.55));
+}
+
+/* each word paints its own gradient — animated words are separate
+   stacking contexts, so a parent background-clip would not reach them */
+.big span {
+  display: inline-block;
+  will-change: transform, opacity;
+  background: linear-gradient(180deg, #ffffff, #ffc2e9 55%, #a98bff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(70% 42% at 50% 62%, rgba(8, 3, 16, 0.72), rgba(8, 3, 16, 0) 72%);
+}
+
+.small {
+  font-size: clamp(16px, 4.6vw, 20px);
+  font-weight: 600;
+  color: #f0e4ff;
+  letter-spacing: -0.01em;
+  text-shadow: 0 0 24px rgba(170, 110, 255, 0.6);
+}
+
+.tap-hint {
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.66);
+  text-shadow: 0 2px 12px rgba(6, 2, 14, 0.9);
+}
+
+.replay {
+  pointer-events: auto;
+  margin-top: 16px;
+  padding: 11px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ---------- fx layers ---------- */
+
+.fx {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.fx.behind {
+  z-index: 2;
+}
+
+.heart {
+  position: absolute;
+  will-change: transform, opacity;
+  font-size: 26px;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(255, 110, 190, 0.75));
+}
+
+.bubbles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 55%, rgba(255, 220, 245, 0.9), rgba(255, 160, 230, 0) 62%);
+}
+
+/* ---------- the five ways NO fails ---------- */
+
+.btn.no.sprinter {
+  will-change: transform, opacity;
+}
+
+/* question 3 swaps the looks: the quiet button is the real answer */
+.btn.decoy-yes {
+  flex: 0 0 auto;
+}
+
+.btn.decoy-no {
+  flex: 1;
+}
+
+.vortex {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+}
+
+.vortex-ring {
+  position: absolute;
+  width: min(70vw, 300px);
+  height: min(70vw, 300px);
+  border-radius: 50%;
+  border: 2px solid rgba(214, 150, 255, 0.75);
+  border-top-color: rgba(255, 140, 215, 0.95);
+  border-left-color: transparent;
+  box-shadow: 0 0 40px rgba(180, 100, 255, 0.5);
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn.yes { animation: none; }
+}
