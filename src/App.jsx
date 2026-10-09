@@ -77,6 +77,13 @@ function Rich({ text }) {
 /*  Background: parallax orbs that react to pointer / tilt             */
 /* ------------------------------------------------------------------ */
 
+/* iOS only sends tilt events once the page asks, and it has to ask from
+   inside a tap — so the Begin button does it. Everywhere else this is a no-op. */
+function askForTilt() {
+  const DOE = window.DeviceOrientationEvent
+  if (typeof DOE?.requestPermission === 'function') DOE.requestPermission().catch(() => {})
+}
+
 function Background({ intensity }) {
   const mx = useMotionValue(0)
   const my = useMotionValue(0)
@@ -271,6 +278,7 @@ export default function App() {
                 style={{ marginTop: 26, flex: 'none', padding: '16px 40px' }}
                 onClick={() => {
                   buzz(10)
+                  askForTilt()
                   setPhase('quiz')
                 }}
                 initial={{ opacity: 0, y: 18, scale: 0.9 }}
